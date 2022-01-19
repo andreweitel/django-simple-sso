@@ -22,11 +22,7 @@ class LoginView(View):
         path = reverse('simple-sso-authenticate')
         redirect_to = urlunparse((scheme, netloc, path, '', query, ''))
         request_token = self.client.get_request_token(redirect_to)
-        try:
-            authorize_url = reverse('simple-sso-authorize')
-        except NoReverseMatch:
-            authorize_url = 'server/authorize/'
-        host = urljoin(self.client.server_url, authorize_url)
+        host = urljoin(self.client.server_url, 'authorize/')
         url = '%s?%s' % (host, urlencode([('token', request_token)]))
         return HttpResponseRedirect(url)
 
