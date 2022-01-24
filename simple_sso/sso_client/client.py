@@ -24,6 +24,7 @@ class LoginView(View):
         request_token = self.client.get_request_token(redirect_to)
         host = urljoin(self.client.server_url, 'authorize/')
         url = '%s?%s' % (host, urlencode([('token', request_token)]))
+        print(url)
         return HttpResponseRedirect(url)
 
     def get_next(self):

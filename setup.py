@@ -35,11 +35,11 @@ CLASSIFIERS = [
 
 
 setup(
-    name='django-simple-sso.naudit',
+    name='django-simple-sso.hga',
     version=__version__,
-    author='Rafael Leira',
-    author_email='rafael.leira@naudit.es',
-    url='http://github.com/naudit/django-simple-sso',
+    author='Rafael Leira, Andrew Eitel',
+    author_email='rafael.leira@naudit.es, aeitel@hga-llc.com',
+    url='http://github.com/andreweitel/django-simple-sso',
     license='BSD-3-Clause',
     description='Simple SSO for Django',
     long_description=open('README.rst').read(),
