@@ -90,7 +90,14 @@ class Client:
         except NoReverseMatch:
             # thisisfine
             url = '/request-token/'
-        return self.consumer.consume(url, {'redirect_to': redirect_to})['request_token']
+        # for handling time difference error between server and client
+        request_token = None
+        while not request_token:
+            try:
+                request_token = self.consumer.consume(url, {'redirect_to': redirect_to})['request_token']
+            except:
+                pass
+        return request_token
 
     def get_user(self, access_token):
         data = {'access_token': access_token}
