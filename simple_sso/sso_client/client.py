@@ -96,7 +96,7 @@ class Client:
             try:
                 request_token = self.consumer.consume(url, {'redirect_to': redirect_to})['request_token']
             except:
-                pass
+                request_token = None
         return request_token
 
     def get_user(self, access_token):
