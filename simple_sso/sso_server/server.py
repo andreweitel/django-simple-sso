@@ -14,6 +14,7 @@ from simple_sso.settings import settings
 from simple_sso.sso_server.models import Token, Consumer
 from webservices.models import Provider
 from webservices.sync import provider_for_django
+from app.models import HubUser
 
 
 class ThrowableHttpResponse(Exception):
@@ -64,7 +65,10 @@ class AuthorizeView(View):
     server = None
 
     def get(self, request):
-        request_token = request.GET.get('token', None)
+        if request.method == 'GET':
+            request_token = request.GET.get('token', None)
+        elif request.method == 'OPTIONS':
+            request_token = request.OPTIONS.get('token', None)
         if not request_token:
             return self.missing_token_argument()
         try:
@@ -209,16 +213,39 @@ class Server:
         for group in user.groups.all():
             groups.append(group.name)
 
-        user_data = {
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'is_staff': False,
-            'is_superuser': False,
-            'is_active': user.is_active,
-            'groups': groups,
-        }
+        hub_user = HubUser.objects.filter(user=user)
+
+        if hub_user:
+            hub_user = hub_user.first()
+            user_data = {
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'is_active': user.is_active,
+                'password': user.password,
+                'groups': groups,
+                'hub_user_first_name': hub_user.first_name, 
+                'hub_user_last_name': hub_user.last_name, 
+                'hub_user_email': hub_user.email, 
+                'hub_user_contact': hub_user.contact, 
+                'hub_user_profile_picture': hub_user.profile_picture.name, 
+                'hub_user_empid': hub_user.empid, 
+            }
+        else:
+            user_data = {
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'is_active': user.is_active,
+                'password': user.password,
+                'groups': groups,
+            }
         if extra_data:
             user_data['extra_data'] = self.get_user_extra_data(
                 user, consumer, extra_data)

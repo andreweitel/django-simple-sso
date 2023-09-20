@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.http import HttpResponseRedirect
 from django.urls import NoReverseMatch, reverse
 from django.views.generic import View
+from app.models import HubUser
 from itsdangerous import URLSafeTimedSerializer
 from webservices.sync import SyncConsumer
 
@@ -120,6 +121,13 @@ class Client:
             server_groups = user_data['groups']
             del user_data['groups']
 
+        hub_user_data = {}
+        keys = list(user_data.keys())
+        for key in keys:
+            if key.startswith('hub_user'):
+                hub_user_data[key] = user_data[key]
+                del user_data[key]
+
         # Build the base user
         try:
             user = User.objects.get(username=user_data['username'])
@@ -129,7 +137,6 @@ class Client:
                 setattr(user, _attr, _val)
         except User.DoesNotExist:
             user = User(**user_data)
-        user.set_unusable_password()
 
         user.save()
 
@@ -138,6 +145,33 @@ class Client:
             if not user.groups.filter(name=group).exists():
                 django_group, created = Group.objects.get_or_create(name=group)
                 user.groups.add(django_group)
+        # check for removed groups 
+        user_groups = user.groups.all()
+        for group in user_groups:
+            if group.name not in server_groups:
+                user.groups.remove(group)
+
+
+        # Check for hubuser data 
+        try:
+            hub_user = HubUser.objects.get(user=user)
+        except:
+            hub_user = HubUser.objects.create(user=user)
+        if 'hub_user_first_name' in hub_user_data:
+            hub_user.first_name = hub_user_data['hub_user_first_name']
+        if 'hub_user_last_name' in hub_user_data:
+            hub_user.last_name = hub_user_data['hub_user_last_name']
+        if 'hub_user_email' in hub_user_data:
+            hub_user.email = hub_user_data['hub_user_email']
+        if 'hub_user_contact' in hub_user_data:
+            hub_user.contact = hub_user_data['hub_user_contact']
+        if 'hub_user_profile_picture' in hub_user_data:
+            hub_user.profile_picture = hub_user_data['hub_user_profile_picture']
+        if 'hub_user_empid' in hub_user_data:
+            hub_user.empid = hub_user_data['hub_user_empid']
+
+        hub_user.save()
+
 
         return user
 
@@ -145,4 +179,5 @@ class Client:
         return [
             re_path(r'^$', self.login_view.as_view(client=self), name='simple-sso-login'),
             re_path(r'^authenticate/$', self.authenticate_view.as_view(client=self), name='simple-sso-authenticate'),
+
         ]
